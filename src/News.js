@@ -6,15 +6,19 @@ export default class News extends React.Component{
         super(props);
         this.state={
             articles:[],
-            categories:['entertainment' ,'general' ,'health' ,'science' ,'sports' ,'technology']
+            categories:['general','entertainment' ,'health' ,'science' ,'sports' ,'technology'],
+            selectedCategory: 'general',
+            loading:true
+            
         }
     }
     componentDidMount(){
-        axios.get('https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6')
+        axios('https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=general')
         .then((response) => {
             console.log(response.data)
           this.setState({
               articles:response.data.articles,
+              loading:false
           })
 
         })
@@ -23,35 +27,66 @@ export default class News extends React.Component{
           console.log(error);
         })
     }
-    handleGeneral = ()=> {
-            
+    onChangeCategory = (event) =>{
+        let category = event.target.value;
+        this.setState({
+            loading: true
+        })
+
+        axios.get(`https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=${category}`)
+        .then((response) => {
+            console.log(response.data)
+            this.setState({
+                articles:response.data.articles,
+                loading: false,
+                selectedCategory: category
+            })
+
+        })
+        .catch((error) => {
+            console.log(error);
+            this.setState({
+                loading: false
+            })
+        })
+        
     }
    
     render(){
         return(
             <React.Fragment>
                 <div>
-                    <div class="btn-group" role="group" aria-label="Basic example">
-                        <button onClick= {this.handleGeneral} type="button" class="btn btn-secondary">general</button>
-                        <button type="button" class="btn btn-secondary">entertainment</button>
-                        <button type="button" class="btn btn-secondary">health</button>
-                        <button type="button" class="btn btn-secondary">science</button>
-                        <button type="button" class="btn btn-secondary">sports</button>
-                        <button type="button" class="btn btn-secondary">technology</button>
-
-                    </div>
+                    {
+                        this.state.loading?(
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        ): (
+                            <div>
+                                <label>Select your category : </label>
+                                <select onChange={this.onChangeCategory} value={this.state.selectedCategory}>
+                                    {
+                                        this.state.categories.map((category) => (
+                                            <option value={category}>{category}</option>
+                                        ) )
+                                    }
+                                </select>
+                            </div>
+                        )
+                    }
                 </div>
+                
                 <div style={{display:"flex",flexWrap:"wrap",justifyContent:"space-around"}}>
                     {
                         this.state.articles.map((article,index) => {
                             return(
                                 <div>
-                                    <div class="card" style={{width: '18rem'}}>
-                                        <img src={article.urlToImage} class="card-img-top" alt="..." />
+                                    <div class="card" style={{width: '18rem',height:'450px',padding:'10px',marginBottom:'20px',borderColor:"black",backgroundColor:'#ffffcc'}}>
+                                        <img src={article.urlToImage} class="card-img-top" alt="..." style={{height:'160px'}}/>
                                         <div class="card-body">
-                                            <h5 class="card-title">{article.title}</h5>
-                                            <p class="card-text">{article.description}</p>
-                                            <a href={article.url} class="btn btn-primary" target='_blank'>View full article</a>
+                                            <h5 class="card-title" style={{height:'180px'}}>{article.title}</h5>
+                                            {/* <p class="card-text">{article.description}</p> */}
+                                            <a href={article.url}class="btn btn-primary" target='_blank'style={{color:'#ccccff'}}>View full article</a>
                                         </div>
                                     </div>
                                 </div>
