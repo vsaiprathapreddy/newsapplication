@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default class News extends React.Component{
     constructor(props){
@@ -8,7 +9,8 @@ export default class News extends React.Component{
             articles:[],
             categories:['general','entertainment' ,'health' ,'science' ,'sports' ,'technology'],
             selectedCategory: 'general',
-            loading:true
+            loading:true,
+            totalArticles: []
             
         }
     }
@@ -18,7 +20,9 @@ export default class News extends React.Component{
             console.log(response.data)
           this.setState({
               articles:response.data.articles,
-              loading:false
+              loading:false,
+              totalArticles:response.totalResults,
+              pageNo:1
           })
 
         })
@@ -33,13 +37,14 @@ export default class News extends React.Component{
             loading: true
         })
 
-        axios.get(`https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=${category}`)
+        axios.get(`https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=${category}&page`)
         .then((response) => {
             console.log(response.data)
             this.setState({
                 articles:response.data.articles,
                 loading: false,
-                selectedCategory: category
+                selectedCategory: category,
+                pageNo:2
             })
 
         })
@@ -51,6 +56,18 @@ export default class News extends React.Component{
         })
         
     }
+
+    onPageChange = () => {
+        //page number increment
+        //this.onChangeCategory
+        console.log('called')
+
+        this.setState({
+            pageNo: this.state.pageNo + 1
+        }, () => {
+            this.onChangeCategory();
+        })
+    }
    
     render(){
         return(
@@ -58,8 +75,8 @@ export default class News extends React.Component{
                 <div>
                     {
                         this.state.loading?(
-                            <div class="spinner-border" role="status">
-                                <span class="sr-only">Loading...</span>
+                            <div className="spinner-border" role="status">
+                                <span className="sr-only">Loading...</span>
                             </div>
                         ): (
                             <div>
@@ -75,25 +92,36 @@ export default class News extends React.Component{
                         )
                     }
                 </div>
-                
-                <div style={{display:"flex",flexWrap:"wrap",justifyContent:"space-around"}}>
-                    {
-                        this.state.articles.map((article,index) => {
-                            return(
-                                <div>
-                                    <div class="card" style={{width: '18rem',height:'450px',padding:'10px',marginBottom:'20px',borderColor:"black",backgroundColor:'#ffffcc'}}>
-                                        <img src={article.urlToImage} class="card-img-top" alt="..." style={{height:'160px'}}/>
-                                        <div class="card-body">
-                                            <h5 class="card-title" style={{height:'180px'}}>{article.title}</h5>
-                                            {/* <p class="card-text">{article.description}</p> */}
-                                            <a href={article.url}class="btn btn-primary" target='_blank'style={{color:'#ccccff'}}>View full article</a>
+                <InfiniteScroll
+                    dataLength={this.state.totalArticles} //This is important field to render the next data
+                    next={this.onPageChange}
+                    hasMore={this.state.articles.length != this.state.totalArticles}
+                    loader={<h4>Loading...</h4>}
+                    endMessage={
+                        <p style={{ textAlign: 'center' }}>
+                        <b>Yay! You have seen it all</b>
+                        </p>
+                    }
+                >
+                    <div style={{display:"flex",flexWrap:"wrap",justifyContent:"space-around"}}>
+                        {
+                            this.state.articles.map((article,index) => {
+                                return(
+                                    <div>
+                                        <div className="card" style={{width: '18rem',height:'450px',padding:'10px',marginBottom:'20px',borderColor:"black",backgroundColor:'#ffffcc'}}>
+                                            <img src={article.urlToImage} className="card-img-top" alt="..." style={{height:'160px'}}/>
+                                            <div className="card-body">
+                                                <h5 className="card-title" style={{height:'180px'}}>{article.title}</h5>
+                                                {/* <p className="card-text">{article.description}</p> */}
+                                                <a href={article.url}className="btn btn-primary" target='_blank'style={{color:'#ccccff'}}>View full article</a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )
-                        })
-                    }
-                </div>
+                                )
+                            })
+                        }
+                    </div>
+                </InfiniteScroll>
             </React.Fragment>
         )
     }
