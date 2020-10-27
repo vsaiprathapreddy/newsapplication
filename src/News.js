@@ -7,22 +7,32 @@ export default class News extends React.Component{
         super(props);
         this.state={
             articles:[],
-            categories:['general','entertainment' ,'health' ,'science' ,'sports' ,'technology'],
+            categories:['general','entertainment' ,'health' ,'science' ,'sports' ,'technology','business'],
             selectedCategory: 'general',
             loading:true,
-            totalArticles: []
+            totalResults: 0,
+            pageNo: 1
             
         }
     }
     componentDidMount(){
-        axios('https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=general')
+        axios({
+            url: 'https://newsapi.org/v2/top-headlines',
+            method: 'GET',
+            params : {
+                country: "in",
+                apiKey: "06ccbee583b443aa867599923640ffc6",
+                category: this.state.selectedCategory,
+                page: this.state.pageNo
+            }
+        })
         .then((response) => {
-            console.log(response.data)
-          this.setState({
+        console.log(response.data.totalResults)
+            
+        this.setState({
               articles:response.data.articles,
               loading:false,
-              totalArticles:response.totalResults,
-              pageNo:1
+              totalResults:response.data.totalResults
           })
 
         })
@@ -31,22 +41,28 @@ export default class News extends React.Component{
           console.log(error);
         })
     }
-    onChangeCategory = (event) =>{
-        let category = event.target.value;
+
+    loadNews = () =>{
         this.setState({
             loading: true
         })
 
-        axios.get(`https://newsapi.org/v2/top-headlines?country=in&apiKey=06ccbee583b443aa867599923640ffc6&category=${category}&page`)
-        .then((response) => {
-            console.log(response.data)
+        axios({
+            url: 'https://newsapi.org/v2/top-headlines',
+            method: 'GET',
+            params : {
+                country: "in",
+                apiKey: "06ccbee583b443aa867599923640ffc6",
+                category: this.state.selectedCategory,
+                page: this.state.pageNo
+            }
+        }).then((response) => {
+            console.log(response);
             this.setState({
-                articles:response.data.articles,
-                loading: false,
-                selectedCategory: category,
-                pageNo:2
+                articles: [...this.state.articles, ...response.data.articles],
+                loading:false,
+                totalResults: response.data.totalResults,
             })
-
         })
         .catch((error) => {
             console.log(error);
@@ -57,18 +73,25 @@ export default class News extends React.Component{
         
     }
 
-    onPageChange = () => {
-        //page number increment
-        //this.onChangeCategory
-        console.log('called')
+    onChangeCategory = (event) => {
+        const category = event.target.value;
 
+        this.setState({
+            selectedCategory: category,
+            articles: []
+        }, () => {
+            this.loadNews();
+        })
+    }
+
+    onPageChange = () => {
         this.setState({
             pageNo: this.state.pageNo + 1
         }, () => {
-            this.onChangeCategory();
+            this.loadNews();
         })
     }
-   
+
     render(){
         return(
             <React.Fragment>
@@ -93,15 +116,9 @@ export default class News extends React.Component{
                     }
                 </div>
                 <InfiniteScroll
-                    dataLength={this.state.totalArticles} //This is important field to render the next data
+                    dataLength={this.state.totalResults} //This is important field to render the next data
                     next={this.onPageChange}
-                    hasMore={this.state.articles.length != this.state.totalArticles}
-                    loader={<h4>Loading...</h4>}
-                    endMessage={
-                        <p style={{ textAlign: 'center' }}>
-                        <b>Yay! You have seen it all</b>
-                        </p>
-                    }
+                    hasMore={this.state.articles.length != this.state.totalResults}
                 >
                     <div style={{display:"flex",flexWrap:"wrap",justifyContent:"space-around"}}>
                         {
@@ -122,6 +139,11 @@ export default class News extends React.Component{
                         }
                     </div>
                 </InfiniteScroll>
+                {
+                    this.state.articles.length == this.state.totalResults && (
+                        <p>That's all</p>
+                    )
+                }
             </React.Fragment>
         )
     }
