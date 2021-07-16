@@ -139,11 +139,11 @@ export default class News extends React.Component{
                         }
                     </div>
                 </InfiniteScroll>
-                {
+                {/* {
                     this.state.articles.length == this.state.totalResults && (
-                        <p>That's all</p>
+                        // <p>That's all</p>
                     )
-                }
+                } */}
             </React.Fragment>
         )
     }
